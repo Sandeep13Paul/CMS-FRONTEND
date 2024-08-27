@@ -57,7 +57,7 @@ const UpdateModal = ({ contact, onClose, updateBox  }) => {
     const fetchMessage = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:8081/user/contacts/session-message",
+          `${import.meta.env.VITE_BACKEND_URI}/user/contacts/session-message`,
           {
             withCredentials: true, // Ensure the session ID is sent with the request
           }
@@ -103,7 +103,7 @@ const UpdateModal = ({ contact, onClose, updateBox  }) => {
       // console.log(contactId);
       const query = new URLSearchParams(contactId).toString();
       const response = await axios.post(
-        `http://localhost:8081/user/contacts/update?${query}`,
+        `${import.meta.env.VITE_BACKEND_URI}/user/contacts/update?${query}`,
         formData,
         {
           headers: {
