@@ -22,7 +22,7 @@ const ProtectedRoute = ({ children }) => {
 
   // If token is neither in URL nor localStorage, redirect to login
   if (!token && !location.search.includes("token")) {
-    return <Navigate to="/login" />;
+    navigate("/login");
   }
 
   // If token exists (in either URL or localStorage), allow access to the protected page
