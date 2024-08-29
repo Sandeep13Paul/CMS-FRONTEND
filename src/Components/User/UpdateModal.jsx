@@ -102,7 +102,7 @@ const UpdateModal = ({ contact, onClose, updateBox  }) => {
       }
       // console.log(contactId);
       const query = new URLSearchParams(contactId).toString();
-      const response = await axios.post(
+      const response = await axios.put(
         `${import.meta.env.VITE_BACKEND_URI}/user/contacts/update?${query}`,
         formData,
         {
