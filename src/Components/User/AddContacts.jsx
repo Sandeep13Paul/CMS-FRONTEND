@@ -159,7 +159,7 @@ const handleFileChange = (e) => {
               {messageContact !== null ? <Message message={messageContact} /> : null} */}
 
               {/* Message Box */}
-              {messageContact !== null && <Message message={messageContact} />}
+              {/* {messageContact !== null && <Message message={messageContact} />} */}
 
 
               {/* form */}

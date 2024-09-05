@@ -3,9 +3,10 @@ import Layout from "../Layout";
 import axios from "axios";
 import ContactModal from "./ContactModal";
 import Swal from "sweetalert2";
+// import { useNavigate } from "react-router-dom";
 import UpdateModal from "./UpdateModal";
 
-const ShowContacts = () => {
+const ShowContact2 = () => {
   const [contacts, setContacts] = useState([]);
   const [urlParams, setUrlParams] = useState({
     page: 0,
@@ -27,29 +28,28 @@ const ShowContacts = () => {
   });
 
   // Function to fetch contacts based on current filters or search
-  const fetchContacts = async () => {
+  const fetchContacts = async (isSearch = false) => {
     try {
       const token = localStorage.getItem("token");
       const query = new URLSearchParams(urlParams).toString();
 
-      let endpoint = 'show';
-      let searchQuery = '';
+      // For search requests, append the search params to the query if available
+      const searchQuery = isSearch
+        ? new URLSearchParams(searchField).toString()
+        : "";
 
-      if (searchField.field && searchField.keyword) {
-        endpoint = 'search';
-        searchQuery = `&field=${encodeURIComponent(searchField.field)}&keyword=${encodeURIComponent(searchField.keyword)}`;
-      }
-
-      const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URI}/user/contacts/${endpoint}?${query}${searchQuery}`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          withCredentials: true,
-        }
-      );
+        const response = await axios.post(
+          `${import.meta.env.VITE_BACKEND_URI}/user/contacts/${
+            isSearch ? "search" : "show"
+          }?${query}&${searchQuery}`,
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            withCredentials: true,
+          }
+        );
 
       if (response.status === 200) {
         const data = response.data;
@@ -97,6 +97,7 @@ const ShowContacts = () => {
   const [selectedContact, setSelectedContact] = useState(null);
 
   const handleView = (contact) => {
+    // console.log("Selected Contact:", contact);
     setSelectedContact(contact);
     setViewBox(true);
   };
@@ -105,9 +106,12 @@ const ShowContacts = () => {
     try {
       const deleteContact = async () => {
         const token = localStorage.getItem("token");
-        const contactId = { id: contact.contactId };
+        // console.log(token);
+        const contactId = {
+          id: contact.contactId,
+        };
         const query = new URLSearchParams(contactId).toString();
-
+        // console.log(query);
         const response = await axios.delete(
           `${import.meta.env.VITE_BACKEND_URI}/user/contacts/delete?${query}`,
           {
@@ -117,11 +121,9 @@ const ShowContacts = () => {
             withCredentials: true,
           }
         );
-
         if (response.status === 200) {
           console.log("deleted");
-          // Optionally, refetch contacts without reloading the page
-          fetchContacts();
+          // navigate('/user/show');
         }
       };
       deleteContact();
@@ -141,18 +143,21 @@ const ShowContacts = () => {
       confirmButtonText: "Yes, delete it!",
     }).then((result) => {
       if (result.isConfirmed) {
-        handleDelete(contact);
+        handleDelete(contact); // Call your function here
         Swal.fire({
           title: "Deleted!",
-          text: "Your contact has been deleted.",
+          text: "Your file has been deleted.",
           icon: "success",
         });
+        window.location.reload();
       }
     });
   };
 
+  // const navigate = useNavigate();
   const [update, setUpdate] = useState(false);
   const handleUpdate = (contact) => {
+    // console.log("Selected Contact:", contact);
     setSelectedContact(contact);
     setUpdate(true);
   };
@@ -160,14 +165,10 @@ const ShowContacts = () => {
   const handleSearch = async (e) => {
     e.preventDefault(); // Prevent form submission
 
-    if (!searchField.field || !searchField.keyword) {
-      Swal.fire("Error", "Please fill both search field and keyword", "error");
+    if (searchField.field && searchField.keyword) {
+      fetchContacts(true); // Fetch contacts with search enabled
     } else {
-      setUrlParams(prevParams => ({
-        ...prevParams,
-        page: 0, // Reset to first page on new search
-      }));
-      // fetchContacts(); // Not needed, useEffect will handle
+      Swal.fire("Error", "Please fill both search field and keyword", "error");
     }
   };
 
@@ -184,6 +185,9 @@ const ShowContacts = () => {
         <h1 className="mx-auto text-5xl">Here are All Your Contacts</h1>
         <div className="contacts_container p-8">
           <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
+            {/* <div className="p-5 flex items-center justify-between flex-column flex-wrap md:flex-row space-y-4 md:space-y-0 pb-4 bg-gray-100 dark:bg-gray-900">
+              
+            </div> */}
             <div className="p-5 flex items-center justify-between flex-column flex-wrap md:flex-row space-y-4 md:space-y-0 pb-4 bg-gray-100 dark:bg-gray-900">
               {/* Sort and Direction controls */}
               <div>
@@ -211,10 +215,10 @@ const ShowContacts = () => {
                     />
                   </svg>
                 </button>
-                {/* Dropdown menu */}
+                {/* <!-- Dropdown menu --> */}
                 <div
                   id="dropdownAction"
-                  className="z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow dark:bg-gray-700 dark:divide-gray-600"
+                  className="z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow w-44 dark:bg-gray-700 dark:divide-gray-600"
                 >
                   <ul
                     className="py-1 text-sm text-gray-700 dark:text-gray-200"
@@ -247,21 +251,20 @@ const ShowContacts = () => {
                   </ul>
                 </div>
               </div>
-              {/* Search Form */}
-              <form onSubmit={handleSearch}>
+              {/* search */}
+              <form action="" onSubmit={handleSearch}>
                 <div className="flex items-center justify-center gap-5">
-                  {/* Search Field Selection */}
+                  {/* search div */}
                   <label htmlFor="underline_select" className="sr-only">
-                    Select Field
+                    Underline select
                   </label>
                   <select
                     id="underline_select"
                     name="field"
                     onChange={handleChange}
-                    value={searchField.field}
                     className="block py-2.5 px-2 w-full text-sm text-gray-500 bg-transparent border-0 border-b-2 border-gray-200 appearance-none dark:text-gray-400 dark:border-gray-700 focus:outline-none focus:ring-0 focus:border-gray-200 peer"
                   >
-                    <option value="" className="dark:bg-gray-700">
+                    <option selected value="" className="dark:bg-gray-700">
                       Choose a Field
                     </option>
                     <option value="name" className="dark:bg-gray-700">
@@ -274,7 +277,6 @@ const ShowContacts = () => {
                       Phone
                     </option>
                   </select>
-                  {/* Search Input */}
                   <label htmlFor="table-search" className="sr-only">
                     Search
                   </label>
@@ -306,39 +308,38 @@ const ShowContacts = () => {
                       placeholder="Search for Contacts..."
                     />
                   </div>
-                  {/* Search Button */}
                   <button
                     type="submit"
+                    onClick={handleSearch}
                     className="py-2.5 px-5 me-2 mb-2 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700"
                   >
                     Search
                   </button>
-                  {/* Optional: Clear Search Button */}
-                  { (searchField.field || searchField.keyword) && (
-                    <button
-                      type="button"
-                      onClick={() => setSearchField({ field: "", keyword: "" })}
-                      className="py-2.5 px-5 mb-2 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700"
-                    >
-                      Clear
-                    </button>
-                  )}
+
+                  {/* search div ends */}
                 </div>
               </form>
             </div>
 
-            {/* Contacts Table */}
             <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
               <thead className="text-xs text-gray-700 uppercase bg-gray-200 dark:bg-gray-700 dark:text-gray-400">
                 <tr>
-                  <th scope="col" className="px-6 py-3">Name</th>
-                  <th scope="col" className="px-6 py-3">Link</th>
-                  <th scope="col" className="px-6 py-3">Number</th>
-                  <th scope="col" className="px-6 py-3">Action</th>
+                  <th scope="col" className="px-6 py-3">
+                    Name
+                  </th>
+                  <th scope="col" className="px-6 py-3">
+                    Link
+                  </th>
+                  <th scope="col" className="px-6 py-3">
+                    Number
+                  </th>
+                  <th scope="col" className="px-6 py-3">
+                    Action
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                {contacts.length > 0 ? (
+                {contacts.length > 0 &&
                   contacts.map((contact) => (
                     <tr
                       key={contact.contactId}
@@ -361,8 +362,12 @@ const ShowContacts = () => {
                           }}
                         />
                         <div className="ps-3">
-                          <div className="text-base font-semibold">{contact.name}</div>
-                          <div className="font-normal text-gray-500">{contact.email}</div>
+                          <div className="text-base font-semibold">
+                            {contact.name}
+                          </div>
+                          <div className="font-normal text-gray-500">
+                            {contact.email}
+                          </div>
                         </div>
                       </th>
                       <td className="px-4 py-4 gap-2">
@@ -413,17 +418,9 @@ const ShowContacts = () => {
                         </button>
                       </td>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="4" className="text-center p-4">
-                      No contacts found.
-                    </td>
-                  </tr>
-                )}
+                  ))}
               </tbody>
             </table>
-
             {/* Pagination Controls */}
             <nav
               className="flex items-center flex-column flex-wrap md:flex-row justify-between pt-4 p-4 dark:bg-gray-900"
@@ -442,6 +439,7 @@ const ShowContacts = () => {
               <ul className="inline-flex -space-x-px rtl:space-x-reverse text-sm h-8">
                 <li>
                   <button
+                    href="#"
                     disabled={urlParams.page <= 0}
                     onClick={() => handlePageChange(urlParams.page - 1)}
                     className="flex items-center justify-center px-3 h-8 ms-0 leading-tight text-gray-500 bg-white border border-gray-300 rounded-s-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
@@ -459,6 +457,7 @@ const ShowContacts = () => {
                 </li>
                 <li>
                   <button
+                    href="#"
                     disabled={urlParams.page >= pageDetails.totalPages - 1}
                     onClick={() => handlePageChange(urlParams.page + 1)}
                     className="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-white border border-gray-300 rounded-e-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
@@ -471,7 +470,6 @@ const ShowContacts = () => {
           </div>
         </div>
       </div>
-      {/* Contact Modal */}
       {viewBox && (
         <ContactModal
           contact={selectedContact}
@@ -479,7 +477,6 @@ const ShowContacts = () => {
           viewBox={viewBox}
         />
       )}
-      {/* Update Modal */}
       {update && (
         <UpdateModal
           contact={selectedContact}
@@ -491,4 +488,4 @@ const ShowContacts = () => {
   );
 };
 
-export default ShowContacts;
+export default ShowContact2;

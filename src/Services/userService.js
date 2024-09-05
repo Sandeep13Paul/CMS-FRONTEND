@@ -47,6 +47,9 @@ const fetchUserData = async () => {
     // console.log(response.status);
     if (response.status === 200) {
       // console.log(response.data);
+      if (localStorage.getItem('user')) {
+        localStorage.removeItem('user');
+      }
       localStorage.setItem('user', JSON.stringify(response.data));
 
       return response.data;
